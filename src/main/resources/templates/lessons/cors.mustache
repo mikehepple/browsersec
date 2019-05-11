@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+    <title>BrowserSec - Cross-Origin Resource Sharing (CORS)</title>
+    <link rel="stylesheet" href="/webjars/materializecss/1.0.0/css/materialize.min.css">
+    <link rel="stylesheet" href="/webjars/prism/themes/prism.css">
+    <link rel="stylesheet" href="/webjars/prism/plugins/line-highlight/prism-line-highlight.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</html>
+
+<body>
+<script src="/webjars/jquery/3.4.1/jquery.min.js"></script>
+<nav class="indigo" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" href="#" class="brand-logo">BrowserSecurity</a>
+        <ul class="right hide-on-med-and-down">
+            <li><a href="/cors">CORS</a></li>
+        </ul>
+
+        <ul id="nav-mobile" class="sidenav">
+            <li><a href="/cors">CORS</a></li>
+        </ul>
+        <a href="#" data-target="nav-mobile" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+<div class="section no-pad-bot" id="index-banner">
+    <div class="container">
+        <br><br>
+        <h1 class="header center orange-text">Cross-origin Resource Sharing (CORS)</h1>
+        <div class="row center">
+            <h5 class="header col s12 light">Accessing APIs and resources on other sites</h5>
+        </div>
+
+    </div>
+</div>
+
+<div class="container">
+    <div class="section">
+        <div class="row">
+            <h4>Table of contents</h4>
+            <div class="collection">
+                <a href="#prerequisites" class="collection-item">Prerequisites</a>
+                <a href="#lesson1" class="collection-item">Lesson 1 - Without CORS</a>
+                <a href="#lesson2" class="collection-item">Lesson 2 - Enabling cross-origin requests</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="row">
+            <div class="col s12">
+                <h4 id="prerequisites">Prerequisites</h4>
+                <p>
+                    In order to complete this lesson, it may be useful to understand the following:
+                <ul class="browser-default">
+                    <li>The HTTP protocol (specifically, headers)</li>
+                    <li>jQuery's <code>$.get</code> method (optional)</li>
+                </ul>
+
+                For the purposes of this demo, we are going to use two sites.</p>
+            </div>
+        </div>
+        <div class="divider"></div>
+        <div class="row">
+
+            <div class="col s6 center-align">
+                <p><i class="material-icons small">looks_one</i> Primary
+                <h4>{{primaryFullHost}}</h4>
+                This site - we need to interact with APIs.</p>
+            </div>
+
+
+            <div class="col s6 center-align">
+                <p><i class="material-icons small">looks_two</i> Secondary
+                <h4>{{secondaryFullHost}}</h4>
+                Another site with an API that we need to pull data from.</p>
+            </div>
+        </div>
+    </div>
+    <div class="section">
+        <div class="divider"></div>
+        <div class="row">
+            <div class="col s12">
+                <p><h4 id="lesson1">Lesson 1 - Without CORS</h4>
+                In this first example, we are going to try and fetch some data
+                from {{secondaryDomain}}'s API.
+                You can <a href="{{secondaryFullHost}}/cors/the_date">open the API endpoint <i
+                    class="material-icons tiny">launch</i></a>
+                and see the data in our browser. Our objective is to display this data - the current time - on our page.
+                </p></div>
+        </div>
+        <div class="row">
+            <div class="col s1"><i class="material-icons medium">looks_one</i></div>
+            <div class="col s11">
+                <pre>
+                <code class="language-javascript">
+                    {{lesson1_script}}
+                </code>
+                </pre>
+                <p>
+                    <a class="waves-effect waves-light indigo btn-large" id="cors-lesson-1-btn">Run</a>
+                    <script>{{{lesson1_script}}}</script>
+                </p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col s1"><i class="material-icons medium">looks_two</i></div>
+            <div class="col s11">
+                <div class="card-panel blue-grey darken-1 small">
+                    <span class="white-text"><h5>#lesson1_result</h5>
+                    <p id="lesson1_result"><em>Not yet run</em></p></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col s12">
+            <p>
+                So what happened here? We know that if we open <em>{{secondaryFullHost}}/cors/the_date</em>
+                in our browser, we see the current date - so shouldn't we be able to
+                easily display that text on our page? We are the owner of this page, why can't we completely control
+                what
+                a user's browser does while visiting us?
+            </p>
+            <p>
+                The reason is simple (well, relatively simple for browser security) - we don't own the data on the third
+                party site. We do not
+                have permission to force our users to interact with another site. Remember, although this use case is
+                pretty simple we could
+                equally be making a request to a Online Banking and fetching sensitive data - so the default for all
+                modern browsers is to
+                deny access to "other" sites. This is known as the <a
+                    href="https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy">Same-origin
+                policy</a>
+                and is a fundamental concept in modern web security.
+            </p>
+            <p>
+                The "origin" of a request is the site the resource originated from. Most browsers consider the protocol,
+                domain name and port when deciding
+                if a request is going to the same origin. In this case, we have two origins:
+            </p>
+            <table class="centered">
+                <thead>
+                <tr>
+                    <th></th>
+                    <th><i class="material-icons">looks_one</i></th>
+                    <th><i class="material-icons">looks_two</i></th>
+                    <th>Matches?</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <th>Protocol</th>
+                    <td>{{primaryProtocol}}</td>
+                    <td>{{secondaryProtocol}}</td>
+                    <td>{{protocolMatches}}</td>
+                </tr>
+                <tr>
+                    <th>Domain Name</th>
+                    <td>{{primaryDomain}}</td>
+                    <td>{{secondaryDomain}}</td>
+                    <td>{{domainMatches}}</td>
+                </tr>
+                <tr>
+                    <th>Port</th>
+                    <td>{{primaryPort}}</td>
+                    <td>{{secondaryPort}}</td>
+                    <td>{{portMatches}}</td>
+                </tr>
+                </tbody>
+            </table>
+            <p>
+                <em>Note that browsers only consider exact matches when calculating origins. Even though
+                    <code>localhost</code> may resolve to
+                    <code>127.0.0.1</code> in DNS - they are considered different origins</em>
+            </p>
+            <p>
+                If a request is made from Primary <i class="material-icons">looks_one</i> to Secondary
+                <i class="material-icons">looks_two</i> then this is considered a <strong>cross-origin request</strong>
+            </p>
+            <p>
+            <h5>Lesson 1 - Recap</h5>
+            <ul class="collection">
+                <li class="collection-item">By default, browser will only allow JavaScript to access resources on the
+                    same origin, this is known as
+                    the <strong>single-origin policy</strong></li>
+                <li class="collection-item">Accessing resources on other origins must be explicitly enabled by the
+                    <strong>other site</strong> and
+                    is known as a <strong>cross-origin request</strong></li>
+            </ul>
+            </p>
+
+
+        </div>
+
+    </div>
+
+    <div class="section">
+        <div class="divider"></div>
+        <div class="row">
+            <div class="col s12">
+                <p>
+                <h4 id="lesson2">Lesson 2 - Enabling cross-origin requests</h4>
+                There are two primary ways of bypassing this protections, and both require the cooperation of the API
+                owner. The first
+                is to change our origin
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col s1"><i class="material-icons medium">looks_one</i></div>
+        <div class="col s11">
+                <pre>
+                <code class="language-javascript">
+                    {{lesson2_script}}
+                </code>
+                </pre>
+            <p>
+                <a class="waves-effect waves-light indigo btn-large" id="cors-lesson-2-btn">Run without CORS</a>
+                <a class="waves-effect waves-light indigo btn-large" id="cors-lesson-2-btn-with-cors">Run with CORS</a>
+                <script>{{{lesson2_script}}}</script>
+            </p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col s1"><i class="material-icons medium">looks_two</i></div>
+        <div class="col s11">
+            <div class="card-panel blue-grey darken-1 small">
+                    <span class="white-text"><h5>#lesson2_result</h5>
+                    <p id="lesson2_result"><em>Not yet run</em></p></span>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col s12">
+            <p>
+                Now - when you click "Run with CORS" it works! What changed? The only difference between this example
+                and the last
+                is that the API we're calling has been specifically designed to support <strong>cross-origin
+                requests</strong>. Let's see how this was done.
+            </p>
+            <p>
+                The clue to the problem when not using CORS will be in the JavaScript console in your browser. Open up
+                the console
+                (<a href="https://zapier.com/help/how-retrieve-console-logs-your-browser-troubleshooting/">find out how
+                here</a>) and click "Run without CORS" again. What do you see?
+            </p>
+            <p>
+                Exact errors vary by browser - on Chrome the developer console will say something like:
+            </p>
+            <span>
+                    <code class="red-text language-markup">No 'Access-Control-Allow-Origin' header is present on the requested resource.</code>
+                </span>
+            <p>
+                The error identified there is a missing header, <code>Access-Control-Allow-Origin</code> (ACAO), so lets
+                check out
+                the headers that the server returned.
+            </p>
+            <pre>
+                        <code class="language-http">
+                            HTTP/1.1 200
+                            Content-Type: text/plain;charset=UTF-8
+                            Content-Length: 28
+                        </code>
+                    </pre>
+            <p>
+                So the error is correct, we're missing the ACAO header. Our only recourse now is to contact the owner
+                of {{secondaryDomain}}
+                and request that they change their API to add the header - otherwise the browser is never going to allow
+                us to use it. Luckily for us, they've already implemented a CORS-compatible API at
+                <a href="{{secondaryFullHost}}/cors/the_date_cors">/corse/the_date_cors<i class="material-icons tiny">launch</i></a>
+                and thats what we're using to successfully load the date in the example above.
+            </p>
+            <p>
+                What's different about this result? If you want - go ahead and check out the "Network" tab in your
+                developer console
+                again and see if you can identify the difference.
+            </p>
+            <pre data-line="2">
+                    <code class="language-http">
+                        HTTP/1.1 200
+                        Access-Control-Allow-Origin: http://localhost:8080
+                        Content-Type: text/plain;charset=UTF-8
+                        Content-Length: 28
+                    </code>
+                </pre>
+            <p>
+                The API owner has kindly added a header to the response for this endpoint to allow us to use their date
+                service
+                on our page. Now that we are whitelisted, we are able to consume their API service and display it's data
+                on our site.
+            </p>
+            <p>
+                You'll note that the returned header specifies our origin directly - so we are the only other origin
+                currently
+                allowed to use the API. Lets see what happens with some other header types.
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <h5>Example 1 - CORS enabled for another origin</h5>
+        If an endpoint has CORS enabled for other origins, then the browser will ignore it. In the example below
+        the API has been enabled for google.com, but noone else. This will not work unless you can somehow host a
+        webpage on google.com!
+    </div>
+
+    <div class="row">
+
+        <div class="col s1"><i class="material-icons medium">looks_one</i></div>
+        <div class="col s11">
+                <pre data-line="2">
+                    <code class="language-http">
+                        HTTP/1.1 200
+                        Access-Control-Allow-Origin: https://www.google.com
+                        Content-Type: text/plain;charset=UTF-8
+                        Content-Length: 28
+                    </code>
+                </pre>
+            <p>
+                <a class="waves-effect waves-light indigo btn-large" id="cors-lesson-2-google-cors-btn">Run</a>
+                <script>{{{lesson2_google_script}}}</script>
+            </p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col s1"><i class="material-icons medium">looks_two</i></div>
+        <div class="col s11">
+            <div class="card-panel blue-grey darken-1 small">
+                    <span class="white-text"><h5>#lesson2_google_result</h5>
+                    <p id="lesson2_google_result"><em>Not yet run</em></p></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col s12">
+            <p>
+                If you check your browser console, you may see a different error message:
+            </p>
+            <span>
+                    <code class="red-text language-markup">The 'Access-Control-Allow-Origin' header has a value 'https://www.google.com' that is not equal to the supplied origin.</code>
+                </span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col s12">
+            <h5>Example 2 - CORS enabled for all origins</h5>
+            It is possible, but not always recommended, to enable CORS for all endpoints. To do this, the server
+            can specify an asterisk or wildcard (*) character in the response.
+        </div>
+    </div>
+
+    <div class="row">
+
+        <div class="col s1"><i class="material-icons medium">looks_one</i></div>
+        <div class="col s11">
+                <pre data-line="2">
+                    <code class="language-http">
+                        HTTP/1.1 200
+                        Access-Control-Allow-Origin: *
+                        Content-Type: text/plain;charset=UTF-8
+                        Content-Length: 28
+                    </code>
+                </pre>
+            <p>
+                <a class="waves-effect waves-light indigo btn-large" id="cors-lesson-2-asterisk-cors-btn">Run</a>
+                <script>{{{lesson2_asterisk_script}}}</script>
+            </p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col s1"><i class="material-icons medium">looks_two</i></div>
+        <div class="col s11">
+            <div class="card-panel blue-grey darken-1 small">
+                    <span class="white-text"><h5>#lesson2_asterisk_result</h5>
+                    <p id="lesson2_asterisk_result"><em>Not yet run</em></p></span>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col s12">
+            <div class="card red darken-1">
+                <div class="card-content white-text">
+                    <span class="card-title">Warning</span>
+                    <p>If you are writing an API be extremely careful before returning a '*' for your CORS value.
+                        Many tutorials recommend this - primarily as the "path of least resistance" and while it will
+                        probably make your application work, it will do so at the expense of your API's security. The
+                        only reason to use a '*' is if you explicitly intend your API to be usable by other origins
+                        and you understand the risk to your data!</p>
+                    <p>We will cover why this might not be desirable in later lessons</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col s12">
+            <p>
+                That's the basics of how to enable CORS! In future lessons we'll dive into the more advanced ways that
+                you
+                can control how others access your API from other sites.
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col s12">
+            <p>
+            <h5>Lesson 2 - Recap</h5>
+            <ul class="collection">
+                <li class="collection-item">
+                    In order to enable Cross-origin requests from JavaScript, the remote site must
+                    specifically permit it. This is done with the
+                    <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin">Access-Control-Allow-Origin</a>
+                    header.
+                </li>
+                <li class="collection-item">
+                    The ACAO header should return only the origin permitted to perform Cross-origin requests. Other
+                    origins will not be able to access the API. If you are absolutely certain your want your API
+                    accessible to all sites, you can return an asterisk '*'. This will enable cross-origin
+                    requests from all sites, those you own and third parties
+                </li>
+
+            </ul>
+            </p>
+        </div>
+    </div>
+</div>
+</div>
+
+
+<!--<div class="container">-->
+<!--    <div class="section">-->
+
+<!--        &lt;!&ndash;   Icon Section   &ndash;&gt;-->
+<!--        <div class="row">-->
+<!--            <div class="col s12 m4">-->
+<!--                <div class="icon-block">-->
+<!--                    <h2 class="center light-blue-text"><i class="material-icons">flash_on</i></h2>-->
+<!--                    <h5 class="center">Speeds up development</h5>-->
+
+<!--                    <p class="light">We did most of the heavy lifting for you to provide a default stylings that incorporate our custom components. Additionally, we refined animations and transitions to provide a smoother experience for developers.</p>-->
+<!--                </div>-->
+<!--            </div>-->
+
+<!--            <div class="col s12 m4">-->
+<!--                <div class="icon-block">-->
+<!--                    <h2 class="center light-blue-text"><i class="material-icons">group</i></h2>-->
+<!--                    <h5 class="center">User Experience Focused</h5>-->
+
+<!--                    <p class="light">By utilizing elements and principles of Material Design, we were able to create a framework that incorporates components and animations that provide more feedback to users. Additionally, a single underlying responsive system across all platforms allow for a more unified user experience.</p>-->
+<!--                </div>-->
+<!--            </div>-->
+
+<!--            <div class="col s12 m4">-->
+<!--                <div class="icon-block">-->
+<!--                    <h2 class="center light-blue-text"><i class="material-icons">settings</i></h2>-->
+<!--                    <h5 class="center">Easy to work with</h5>-->
+
+<!--                    <p class="light">We have provided detailed documentation as well as specific code examples to help new users get started. We are also always open to feedback and can answer any questions a user may have about Materialize.</p>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+
+<!--    </div>-->
+<!--    <br><br>-->
+<!--</div>-->
+
+<footer class="page-footer orange">
+    <div class="container">
+        <div class="row">
+            <div class="col l6 s12">
+                <h5 class="white-text">Company Bio</h5>
+                <p class="grey-text text-lighten-4">We are a team of college students working on this project like it's
+                    our full time job. Any amount would help support and continue development on this project and is
+                    greatly appreciated.</p>
+
+
+            </div>
+            <div class="col l3 s12">
+                <h5 class="white-text">Settings</h5>
+                <ul>
+                    <li><a class="white-text" href="#!">Link 1</a></li>
+                    <li><a class="white-text" href="#!">Link 2</a></li>
+                    <li><a class="white-text" href="#!">Link 3</a></li>
+                    <li><a class="white-text" href="#!">Link 4</a></li>
+                </ul>
+            </div>
+            <div class="col l3 s12">
+                <h5 class="white-text">Connect</h5>
+                <ul>
+                    <li><a class="white-text" href="#!">Link 1</a></li>
+                    <li><a class="white-text" href="#!">Link 2</a></li>
+                    <li><a class="white-text" href="#!">Link 3</a></li>
+                    <li><a class="white-text" href="#!">Link 4</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            Made by <a class="orange-text text-lighten-3" href="http://materializecss.com">Materialize</a>
+        </div>
+    </div>
+</footer>
+
+
+<!--  Scripts-->
+<script src="/webjars/materializecss/1.0.0/js/materialize.min.js"></script>
+<script src="js/init.js"></script>
+<script src="/webjars/prism/prism.js"></script>
+<script src="/webjars/prism/plugins/normalize-whitespace/prism-normalize-whitespace.min.js"></script>
+<script src="/webjars/prism/plugins/line-highlight/prism-line-highlight.min.js"></script>
+
+</body>
+</html>
